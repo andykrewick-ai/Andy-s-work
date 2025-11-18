@@ -14,7 +14,6 @@
     .music-btn:hover { transform: scale(1.05); }
     .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
     .video-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-    /* simple notification style */
     .upload-notification { transition: opacity .2s ease; }
     .media-check { font-size: 0.9rem; color: #374151; }
     .media-check .ok { color: #059669; }
@@ -24,10 +23,8 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <!-- 背景音乐播放器：默认引用仓库中的 bgm.mp3 -->
   <audio id="bgMusic" loop src="bgm.mp3"></audio>
 
-  <!-- 音乐控制（右下） -->
   <div class="music-control">
     <label for="musicFile" class="music-btn cursor-pointer" title="Upload your own background music">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,11 +44,9 @@
     </div>
   </div>
 
-  <!-- Navbar -->
   <nav class="bg-blue-800 text-white p-4 sticky top-0 shadow-md z-40">
     <div class="container mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <!-- 使用仓库里的 logo.png -->
         <img id="siteLogo" src="logo.png" alt="Dong Chenyou Logo" class="logo-img">
         <h1 class="text-2xl font-bold">Dong Chenyou</h1>
       </div>
@@ -65,7 +60,6 @@
     </div>
   </nav>
 
-  <!-- Hero -->
   <section id="home" class="bg-gradient-to-b from-blue-900 to-blue-600 py-24 text-center text-white">
     <div class="container mx-auto px-4">
       <h2 class="text-5xl font-bold mb-4">Whispers of Science and Mystery</h2>
@@ -74,7 +68,6 @@
     </div>
   </section>
 
-  <!-- Media debug/check area -->
   <section class="py-6 bg-white border-b">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between">
@@ -93,7 +86,6 @@
     </div>
   </section>
 
-  <!-- About -->
   <section id="about" class="py-20 bg-white">
     <div class="container mx-auto px-4 text-center">
       <h2 class="text-4xl font-bold mb-8">About Me</h2>
@@ -103,12 +95,10 @@
     </div>
   </section>
 
-  <!-- Stories (完整章节文本) -->
   <section id="stories" class="py-20 bg-gray-100">
     <div class="container mx-auto px-4">
       <h2 class="text-4xl font-bold text-center mb-10">Story-Telling Board</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-        <!-- Chapter 1 -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition">
           <div class="bg-gradient-to-br from-purple-100 to-blue-100 p-8 text-center">
             <h3 class="text-3xl font-bold text-purple-900">Chapter 1: The Lantern’s Glow</h3>
@@ -149,7 +139,6 @@ Chapter 1 Word Count: 352
           </div>
         </div>
 
-        <!-- Chapter 2 -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition">
           <div class="bg-gradient-to-br from-purple-100 to-blue-100 p-8 text-center">
             <h3 class="text-3xl font-bold text-purple-900">Chapter 2: The Keeper’s Choice</h3>
@@ -199,7 +188,6 @@ Chapter 2 Word Count: 372
     </div>
   </section>
 
-  <!-- Video Section -->
   <section id="videos" class="py-20 bg-white">
     <div class="container mx-auto px-4">
       <h2 class="text-4xl font-bold text-center mb-10">Video Gallery</h2>
@@ -207,7 +195,6 @@ Chapter 2 Word Count: 372
         Watch behind-the-scenes of my AI storytelling, chemistry experiments, or Lung Fu Shan explorations.
       </p>
 
-      <!-- Upload form -->
       <div class="max-w-2xl mx-auto mb-8 p-8 bg-gray-50 rounded-xl shadow-md">
         <h3 class="text-2xl font-semibold mb-6 text-center">Upload Your Video</h3>
         <form id="videoUploadForm" class="space-y-6">
@@ -223,17 +210,14 @@ Chapter 2 Word Count: 372
         </form>
         <p id="uploadStatus" class="mt-4 text-center hidden"></p>
 
-        <!-- 快速使用仓库内媒体 -->
         <div class="mt-4 text-center">
           <button id="useRepoMedia" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Use repository media (teaser.mp4 / bgm.mp3 / logo)</button>
         </div>
       </div>
 
-      <!-- Video Grid (初始会显示仓库里的 teaser.mp4，如果存在) -->
       <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div id="repoTeaserCard" class="bg-white rounded-xl shadow-lg overflow-hidden">
           <div class="video-container">
-            <!-- 默认指向仓库中的 teaser.mp4（如果存在） -->
             <video controls preload="metadata">
               <source src="teaser.mp4" type="video/mp4">
               Your browser does not support the video tag.
@@ -253,7 +237,6 @@ Chapter 2 Word Count: 372
     </div>
   </section>
 
-  <!-- Contact -->
   <section id="contact" class="py-20 bg-white">
     <div class="container mx-auto px-4 text-center">
       <h2 class="text-4xl font-bold mb-6">Let's Connect</h2>
@@ -275,7 +258,6 @@ Chapter 2 Word Count: 372
   </footer>
 
   <script>
-    // Helpers
     function escapeHtml(unsafe) {
       return unsafe
         .replace(/&/g, "&amp;")
@@ -298,7 +280,6 @@ Chapter 2 Word Count: 372
       }, 3000);
     }
 
-    // Simple resource check (HEAD requests) for debugging
     async function checkResourceHead(path) {
       try {
         const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
@@ -345,7 +326,6 @@ Chapter 2 Word Count: 372
 
     document.getElementById('checkMediaBtn').addEventListener('click', runMediaChecks);
 
-    // Audio controls and handling
     const audio = document.getElementById('bgMusic');
     const playPath = document.getElementById('playPath');
     const volumeSlider = document.getElementById('volumeSlider');
@@ -353,17 +333,14 @@ Chapter 2 Word Count: 372
     let isPlaying = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Set default volume and style for slider
       audio.volume = 0.3;
       volumeSlider.value = 30;
       volumeSlider.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 30%, #e5e7eb 30%, #e5e7eb 100%)`;
 
-      // Update play/pause state when audio events happen
       audio.addEventListener('play', () => { isPlaying = true; updatePlayIcon(); });
       audio.addEventListener('pause', () => { isPlaying = false; updatePlayIcon(); });
       audio.addEventListener('ended', () => { isPlaying = false; updatePlayIcon(); });
 
-      // Run initial check when page loads (helpful for debugging)
       runMediaChecks();
     });
 
@@ -405,7 +382,6 @@ Chapter 2 Word Count: 372
       this.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${this.value}%, #e5e7eb ${this.value}%, #e5e7eb 100%)`;
     });
 
-    // Video upload (client-side preview only)
     document.getElementById('videoUploadForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const title = document.getElementById('videoTitle').value.trim();
@@ -456,18 +432,14 @@ Chapter 2 Word Count: 372
       }, 800);
     });
 
-    // Use repository media button
     document.getElementById('useRepoMedia').addEventListener('click', () => {
-      // logo
       const logo = document.getElementById('siteLogo');
       logo.src = 'logo.png';
 
-      // audio
       audio.src = 'bgm.mp3';
       audio.load();
       showNotification('Repository media applied. Click play to start background music.');
 
-      // ensure repo teaser card exists and points to teaser.mp4
       const repoCard = document.getElementById('repoTeaserCard');
       if (repoCard) {
         const source = repoCard.querySelector('video source');
@@ -498,7 +470,6 @@ Chapter 2 Word Count: 372
       }
     });
 
-    // Contact form (local-only)
     function handleSubmit(event) {
       event.preventDefault();
       const name = document.getElementById('name').value.trim();

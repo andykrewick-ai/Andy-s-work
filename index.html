@@ -1,70 +1,30 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Dong Chenyou's HKU portfolio: Blending AI, chemistry, and stories like 'A Whisper in the Woods'. Explore creative writing and connect.">
-  <meta name="keywords" content="Dong Chenyou, HKU, storytelling, AI writing, creative portfolio">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Dong Chenyou's HKU portfolio: Blending AI, chemistry, and stories." />
   <title>Dong Chenyou | HKU Storyteller</title>
-  <!-- Production-ready Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Georgia', serif; }
     .logo-img { width: 48px; height: 48px; object-fit: contain; filter: brightness(1.1) contrast(1.2); }
     .music-control { position: fixed; bottom: 24px; right: 24px; z-index: 50; }
-    .music-btn { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.3s; }
-    .music-btn:hover { transform: scale(1.1); }
+    .music-btn { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(2,6,23,0.2); }
+    .music-btn:hover { transform: scale(1.05); }
     .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
     .video-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    /* simple notification style */
+    .upload-notification { transition: opacity .2s ease; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <!-- 背景音乐播放器 -->
-  <audio id="bgMusic" loop></audio>
+  <!-- 背景音乐播放器：默认引用仓库中的 bgm.mp3 -->
+  <audio id="bgMusic" loop src="bgm.mp3"></audio>
 
-  <!-- 音乐控制中心（右下角） -->
+  <!-- 音乐控制（右下） -->
   <div class="music-control">
-    <!-- 上传音乐按钮 -->
     <label for="musicFile" class="music-btn cursor-pointer" title="Upload your own background music">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -72,16 +32,14 @@
     </label>
     <input type="file" id="musicFile" accept="audio/mp3,audio/ogg,audio/wav" class="hidden">
 
-    <!-- 播放/暂停按钮 -->
     <button id="playPauseBtn" class="music-btn mt-3" onclick="togglePlay()" title="Play/Pause">
       <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-6.718-3.884A1 1 0 007 8.122v7.756a1 1 0 001.034.938l6.718-3.884a1 1 0 000-1.764z" />
+        <path id="playPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-6.718-3.884A1 1 0 007 8.122v7.756a1 1 0 001.034.938l6.718-3.884a1 1 0 000-1.764z" />
       </svg>
     </button>
 
-    <!-- 音量控制 -->
     <div class="mt-3 bg-white/90 backdrop-filter backdrop-blur rounded-full p-2 shadow-lg">
-      <input type="range" id="volumeSlider" min="0" max="100" value="30" class="w-24 h-2 rounded-lg appearance-none cursor-pointer" style="background: linear-gradient(to right, #3b82f6 0%, #3b82f6 30%, #e5e7eb 30%, #e5e7eb 100%)">
+      <input type="range" id="volumeSlider" min="0" max="100" value="30" class="w-24 h-2 rounded-lg appearance-none cursor-pointer">
     </div>
   </div>
 
@@ -89,7 +47,8 @@
   <nav class="bg-blue-800 text-white p-4 sticky top-0 shadow-md z-40">
     <div class="container mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <img src="https://i.ibb.co/4pZ3vKX/flask-logo-final.png" alt="Dong Chenyou Logo" class="logo-img">
+        <!-- 使用仓库里的 logo.png -->
+        <img id="siteLogo" src="logo.png" alt="Dong Chenyou Logo" class="logo-img">
         <h1 class="text-2xl font-bold">Dong Chenyou</h1>
       </div>
       <div class="space-x-4">
@@ -102,27 +61,26 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
+  <!-- Hero -->
   <section id="home" class="bg-gradient-to-b from-blue-900 to-blue-600 py-24 text-center text-white">
     <div class="container mx-auto px-4">
       <h2 class="text-5xl font-bold mb-4">Whispers of Science and Mystery</h2>
-      <p class="text-xl mb-6 max-w-2xl mx-auto">Hi, I'm Dong Chenyou—a HKU Chemistry student crafting AI-powered tales that bridge labs and legends. Discover my world.</p>
+      <p class="text-xl mb-6 max-w-2xl mx-auto">Hi, I'm Dong Chenyou—a HKU Chemistry student crafting AI-powered tales that bridge labs and legends.</p>
       <a href="#stories" class="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 font-semibold">Explore Stories</a>
     </div>
   </section>
 
-  <!-- About Section -->
+  <!-- About -->
   <section id="about" class="py-20 bg-white">
     <div class="container mx-auto px-4 text-center">
       <h2 class="text-4xl font-bold mb-8">About Me</h2>
       <p class="text-lg max-w-3xl mx-auto leading-relaxed mb-6">
-        As a first-year Chemistry student at HKU, I spend my days decoding molecules and nights experimenting with AI prompts to birth stories. Inspired by Lung Fu Shan's shadows, my work—like "A Whisper in the Woods" (created with Grok-1 and DeepSeek)—explores secrets, science, and the supernatural. It's about guarding mysteries in a world of data. Join my journey of blending logic with lore.
+        As a first-year Chemistry student at HKU, I spend my days decoding molecules and nights experimenting with AI prompts to birth stories.
       </p>
-      <p class="text-sm text-gray-600">Featured in HKU creative circles • Total mystery words: 724</p>
     </div>
   </section>
 
-  <!-- Story-Telling Board Section -->
+  <!-- Stories -->
   <section id="stories" class="py-20 bg-gray-100">
     <div class="container mx-auto px-4">
       <h2 class="text-4xl font-bold text-center mb-10">Story-Telling Board</h2>
@@ -139,31 +97,11 @@ A Whisper in the Woods
 
 Chapter 1: The Lantern’s Glow
 
-Andy Chen tightened his HKU scarf against the evening chill. As a first-year Chemistry student, he normally spent evenings in the library or gaming with friends. Tonight was different. Campus whispers had drawn him to Lung Fu Shan’s shadowy trails. Upperclassmen spoke of strange sounds in these woods—a melodic hum that seemed to call to listeners.
+Andy Chen tightened his HKU scarf against the evening chill. As a first-year Chemistry student, he normally spent evenings in the library or gaming with friends. Tonight was different. Campus whi[...]
 
-His lantern swung gently, casting dancing shadows between ancient banyan trees. The city’s distant glow should have made this feel safe, but the forest had its own rules. Brittle leaves crackled beneath his boots, each step taking him further from campus normality.
+His lantern swung gently, casting dancing shadows between ancient banyan trees. The city’s distant glow should have made this feel safe, but the forest had its own rules. Brittle leaves crackle[...]
 
 "Probably just wind through bamboo," he muttered to himself. Yet his scientific curiosity kept him moving forward. If there was a natural explanation, he wanted to find it.
-
-The hum began so softly he almost missed it. A gentle vibration in the air that had nothing to do with Hong Kong’s ever-present urban murmur. It grew clearer as he walked, reminding him of temple bells heard from a distance. His pulse quickened despite himself.
-
-The melody led him off the main path. Thick roots threatened to trip him, but the sound grew stronger, pulling him toward a small clearing. There stood the oldest banyan he’d ever seen, its aerial roots forming a wooden curtain around the trunk.
-
-At the tree’s base rested a smooth stone about the size of his textbook. It glowed with a soft blue light that pulsed in time with the humming. As he approached, the sound stopped abruptly.
-
-Andy knelt, setting his lantern beside him. The stone’s surface felt warm despite the cool evening. He ran his fingers over its unusual smoothness—unlike any natural rock formation he’d studied.
-
-"Chenyou."
-
-The voice came from everywhere and nowhere. Andy snatched his hand back, scanning the empty clearing.
-
-"You’ve found me." The voice carried neither threat nor welcome, only simple statement. "Will you guard my secret?"
-
-Andy’s scientific mind raced through possibilities. Audio hallucination? Some elaborate prank? But the stone’s glow pulsed steadily, and the voice had known his proper name—one only his professors and family used.
-
-The forest waited silently. Even the usual nighttime creatures had gone quiet. Andy understood this moment mattered. His analytical nature warred with something deeper, something that recognized this was beyond textbooks and logic.
-
-Chapter 1 Word Count: 352
             </div>
           </div>
         </div>
@@ -176,41 +114,7 @@ Chapter 1 Word Count: 352
           </div>
           <div class="p-8 text-gray-700 leading-relaxed text-sm">
             <div class="whitespace-pre-wrap">
-Chapter 2: The Keeper’s Choice
-
-Andy remained kneeling before the ancient tree. The glowing stone seemed to watch him, though it had no eyes. His mind, trained to analyze data and draw conclusions, struggled with this impossible situation.
-
-"You are the heart of the mountain?" he asked the empty air.
-
-The voice returned, clearer now. "I am what remains of this place’s spirit. Hidden when the first roads were built. Protected as the city grew around me."
-
-Andy glanced toward the glittering high-rises of Pok Fu Lam. He understood development pressures better than most. His own father worked in construction. Hong Kong always built upward and outward, leaving little room for mystery.
-
-"What happens if I tell people?" he asked.
-
-"The wrong hands would use my energy. The right hands would study me to death. Neither serves the mountain’s balance."
-
-Andy thought of his chemistry lab. He’d watched professors dissect fascinating phenomena until nothing magical remained. Everything became data points and equations. Would this voice suffer the same fate?
-
-He imagined campus reaction. Professors would call it a geological oddity. Students would make videos for social media. Tour companies would create "magical rock" tours. The peace of this clearing would vanish forever.
-
-The stone’s glow intensified. "You must choose now, keeper."
-
-Andy remembered his environmental science professor’s words: "Not everything that can be studied should be exploited." This felt like what she meant.
-
-His gaming experience kicked in. Sometimes you protected valuable things not because you understood them, but because they mattered. The right choice wasn’t always the obvious one.
-
-"I’ll keep your secret," he said, the words feeling both heavy and right.
-
-The stone flared brilliantly, light washing through the clearing. Then it faded, sinking into the earth as if made of water. The ground showed no sign it had ever been there.
-
-The forest came alive again. Leaves rustled in approval. The distant city sounds returned to normal volume. Andy felt both relief and loss.
-
-As he walked back toward campus, he realized something had changed. He checked his phone—barely any time had passed. Yet he felt different. The mountain’s secret was his to protect now.
-
-He looked back at the dark forest. A soft hum followed him, not in his ears but in his bones. Andy smiled. Some truths were too important for laboratory testing.
-
-Chapter 2 Word Count: 372
+Chapter 2 content...
             </div>
           </div>
         </div>
@@ -223,12 +127,11 @@ Chapter 2 Word Count: 372
     <div class="container mx-auto px-4">
       <h2 class="text-4xl font-bold text-center mb-10">Video Gallery</h2>
       <p class="text-center text-lg mb-12 text-gray-600 max-w-3xl mx-auto">
-        Watch behind-the-scenes of my AI storytelling, chemistry experiments, or Lung Fu Shan explorations. 
-        <strong>Upload your own video below!</strong>
+        Watch behind-the-scenes of my AI storytelling, chemistry experiments, or Lung Fu Shan explorations.
       </p>
 
-      <!-- 视频上传表单 -->
-      <div class="max-w-2xl mx-auto mb-16 p-8 bg-gray-50 rounded-xl shadow-md">
+      <!-- Upload form -->
+      <div class="max-w-2xl mx-auto mb-8 p-8 bg-gray-50 rounded-xl shadow-md">
         <h3 class="text-2xl font-semibold mb-6 text-center">Upload Your Video</h3>
         <form id="videoUploadForm" class="space-y-6">
           <div>
@@ -239,15 +142,32 @@ Chapter 2 Word Count: 372
             <label class="block text-sm font-medium text-gray-700 mb-2">Video File (MP4, max 100MB)</label>
             <input type="file" id="videoFile" accept="video/mp4" class="w-full p-3 border rounded-lg" required>
           </div>
-          <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-semibold">
-            Upload Video
-          </button>
+          <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-semibold">Upload Video</button>
         </form>
         <p id="uploadStatus" class="mt-4 text-center hidden"></p>
+
+        <!-- 快速使用仓库内媒体 -->
+        <div class="mt-4 text-center">
+          <button id="useRepoMedia" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Use repository media (teaser.mp4 / bgm.mp3 / logo)</button>
+        </div>
       </div>
 
-      <!-- 视频网格 -->
+      <!-- Video Grid (初始会显示仓库里的 teaser.mp4，如果存在) -->
       <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div id="repoTeaserCard" class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="video-container">
+            <!-- 默认指向仓库中的 teaser.mp4（如果存在） -->
+            <video controls preload="metadata">
+              <source src="teaser.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-semibold mb-2">Teaser</h3>
+            <p class="text-gray-600 text-sm">From repository: teaser.mp4</p>
+          </div>
+        </div>
+
         <div class="bg-gray-100 border-2 border-dashed rounded-xl p-12 text-center text-gray-500">
           <p class="text-lg font-medium">Your uploaded videos will appear here</p>
           <p class="text-sm mt-2">Start by uploading your first video above!</p>
@@ -256,7 +176,7 @@ Chapter 2 Word Count: 372
     </div>
   </section>
 
-  <!-- Contact Section -->
+  <!-- Contact -->
   <section id="contact" class="py-20 bg-white">
     <div class="container mx-auto px-4 text-center">
       <h2 class="text-4xl font-bold mb-6">Let's Connect</h2>
@@ -273,89 +193,92 @@ Chapter 2 Word Count: 372
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="bg-blue-800 text-white py-8 text-center">
     <p class="text-sm">© 2025 Dong Chenyou. All rights reserved.</p>
   </footer>
 
   <script>
+    // Helpers
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showNotification(msg) {
+      const existing = document.querySelector('.upload-notification');
+      if (existing) existing.remove();
+      const notification = document.createElement('div');
+      notification.textContent = msg;
+      notification.className = 'upload-notification fixed bottom-32 right-6 bg-black/80 text-white px-4 py-2 rounded-lg text-sm shadow-lg z-50';
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 200);
+      }, 3000);
+    }
+
+    // Audio controls and handling
     const audio = document.getElementById('bgMusic');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
+    const playPath = document.getElementById('playPath');
     const volumeSlider = document.getElementById('volumeSlider');
     const musicFileInput = document.getElementById('musicFile');
     let isPlaying = false;
 
-    // 上传音乐
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default volume and style for slider
+      audio.volume = 0.3;
+      volumeSlider.value = 30;
+      volumeSlider.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 30%, #e5e7eb 30%, #e5e7eb 100%)`;
+
+      // Update play/pause state when audio events happen
+      audio.addEventListener('play', () => { isPlaying = true; updatePlayIcon(); });
+      audio.addEventListener('pause', () => { isPlaying = false; updatePlayIcon(); });
+      audio.addEventListener('ended', () => { isPlaying = false; updatePlayIcon(); });
+    });
+
     musicFileInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
-
-      const validTypes = ['audio/mp3', 'audio/ogg', 'audio/wav'];
+      const validTypes = ['audio/mp3', 'audio/ogg', 'audio/wav', 'audio/mpeg'];
       if (!validTypes.includes(file.type)) {
-        alert('Please upload MP3, OGG, or WAV file.');
+        alert('Please upload MP3, OGG, WAV files.');
         return;
       }
-
       const url = URL.createObjectURL(file);
       audio.src = url;
       audio.load();
-      
-      audio.play().then(() => {
-        isPlaying = true;
-        updatePlayIcon();
-        showNotification('Music loaded and playing!');
-      }).catch(err => {
-        console.error('Play failed:', err);
-        showNotification('Click play to start music');
+      audio.play().catch(() => {
+        showNotification('Click play to start music (browser blocked autoplay).');
       });
     });
 
-    // 播放/暂停
     function togglePlay() {
-      if (!audio.src || audio.src === location.href) {
-        showNotification('Please upload a music file first');
+      if (!audio.src) {
+        showNotification('No audio source found. Upload or use repository media.');
         return;
       }
-      if (isPlaying) {
-        audio.pause();
-      } else {
-        audio.play().catch(err => {
-          console.error('Play error:', err);
-          showNotification('Playback failed. Try another file.');
-        });
-      }
-      isPlaying = !isPlaying;
-      updatePlayIcon();
+      if (isPlaying) audio.pause();
+      else audio.play().catch(() => showNotification('Playback blocked by browser. Please click play.'));
     }
 
     function updatePlayIcon() {
       if (isPlaying) {
-        playIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>';
+        playPath.setAttribute('d', 'M10 9v6m4-6v6'); // pause icon
       } else {
-        playIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-6.718-3.884A1 1 0 007 8.122v7.756a1 1 0 001.034.938l6.718-3.884a1 1 0 000-1.764z" />';
+        playPath.setAttribute('d', 'M14.752 11.168l-6.718-3.884A1 1 0 007 8.122v7.756a1 1 0 001.034.938l6.718-3.884a1 1 0 000-1.764z'); // play icon
       }
     }
 
-    // 音量控制
     volumeSlider.addEventListener('input', function() {
       audio.volume = this.value / 100;
       this.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${this.value}%, #e5e7eb ${this.value}%, #e5e7eb 100%)`;
     });
 
-    // 通知
-    function showNotification(msg) {
-      const existing = document.querySelector('.upload-notification');
-      if (existing) existing.remove();
-      
-      const notification = document.createElement('div');
-      notification.textContent = msg;
-      notification.className = 'upload-notification fixed bottom-32 right-6 bg-black/80 text-white px-4 py-2 rounded-lg text-sm shadow-lg z-50';
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-    }
-
-    // 视频上传
+    // Video upload (client-side preview only)
     document.getElementById('videoUploadForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const title = document.getElementById('videoTitle').value.trim();
@@ -364,29 +287,16 @@ Chapter 2 Word Count: 372
       const grid = document.getElementById('videoGrid');
 
       if (!title) {
-        status.textContent = 'Please enter a video title.';
-        status.className = 'mt-4 text-center text-red-600';
-        status.classList.remove('hidden');
-        return;
+        status.textContent = 'Please enter a video title.'; status.className = 'mt-4 text-center text-red-600'; return;
       }
-
       if (!file) {
-        status.textContent = 'Please select a video file.';
-        status.className = 'mt-4 text-center text-red-600';
-        status.classList.remove('hidden');
-        return;
+        status.textContent = 'Please select a video file.'; status.className = 'mt-4 text-center text-red-600'; return;
       }
-
       if (file.size > 100 * 1024 * 1024) {
-        status.textContent = 'Video must be under 100MB.';
-        status.className = 'mt-4 text-center text-red-600';
-        status.classList.remove('hidden');
-        return;
+        status.textContent = 'Video must be under 100MB.'; status.className = 'mt-4 text-center text-red-600'; return;
       }
 
-      status.textContent = 'Processing video...';
-      status.className = 'mt-4 text-center text-blue-600';
-      status.classList.remove('hidden');
+      status.textContent = 'Processing video...'; status.className = 'mt-4 text-center text-blue-600';
 
       setTimeout(() => {
         try {
@@ -396,36 +306,72 @@ Chapter 2 Word Count: 372
           videoCard.innerHTML = `
             <div class="video-container">
               <video controls preload="metadata">
-                <source src="${videoURL}" type="video/mp4">
+                <source src="${videoURL}" type="${file.type}">
                 Your browser does not support the video tag.
               </video>
             </div>
             <div class="p-6">
-              <h3 class="text-xl font-semibold mb-2">${title}</h3>
-              <p class="text-gray-600 text-sm">Uploaded just now</p>
+              <h3 class="text-xl font-semibold mb-2">${escapeHtml(title)}</h3>
+              <p class="text-gray-600 text-sm">Uploaded just now (local preview)</p>
             </div>
           `;
-
           const placeholder = grid.querySelector('.border-dashed');
-          if (placeholder && placeholder.parentElement === grid) {
-            grid.insertBefore(videoCard, placeholder);
-          } else {
-            grid.appendChild(videoCard);
-          }
+          if (placeholder && placeholder.parentElement === grid) grid.insertBefore(videoCard, placeholder);
+          else grid.appendChild(videoCard);
 
-          status.textContent = 'Video uploaded successfully!';
-          status.className = 'mt-4 text-center text-green-600';
+          status.textContent = 'Video uploaded successfully!'; status.className = 'mt-4 text-center text-green-600';
           setTimeout(() => status.classList.add('hidden'), 3000);
           e.target.reset();
         } catch (err) {
           console.error('Upload error:', err);
-          status.textContent = 'Upload failed. Please try again.';
-          status.className = 'mt-4 text-center text-red-600';
+          status.textContent = 'Upload failed. Please try again.'; status.className = 'mt-4 text-center text-red-600';
         }
       }, 800);
     });
 
-    // 联系表单
+    // Use repository media button
+    document.getElementById('useRepoMedia').addEventListener('click', () => {
+      // logo
+      const logo = document.getElementById('siteLogo');
+      logo.src = 'logo.png';
+
+      // audio
+      audio.src = 'bgm.mp3';
+      audio.load();
+      showNotification('Repository media applied. Click play to start background music.');
+
+      // ensure repo teaser card exists and points to teaser.mp4
+      const repoCard = document.getElementById('repoTeaserCard');
+      if (repoCard) {
+        const source = repoCard.querySelector('video source');
+        if (source) {
+          source.src = 'teaser.mp4';
+          const videoEl = repoCard.querySelector('video');
+          videoEl.load();
+        }
+      } else {
+        const grid = document.getElementById('videoGrid');
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-lg overflow-hidden';
+        card.innerHTML = `
+          <div class="video-container">
+            <video controls preload="metadata">
+              <source src="teaser.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-semibold mb-2">Teaser</h3>
+            <p class="text-gray-600 text-sm">From repository: teaser.mp4</p>
+          </div>
+        `;
+        const placeholder = grid.querySelector('.border-dashed');
+        if (placeholder && placeholder.parentElement === grid) grid.insertBefore(card, placeholder);
+        else grid.appendChild(card);
+      }
+    });
+
+    // Contact form (local-only)
     function handleSubmit(event) {
       event.preventDefault();
       const name = document.getElementById('name').value.trim();
@@ -435,16 +381,6 @@ Chapter 2 Word Count: 372
       event.target.reset();
       setTimeout(() => formMessage.classList.add('hidden'), 5000);
     }
-
-    // 初始化
-    document.addEventListener('DOMContentLoaded', function() {
-      audio.volume = 0.3;
-      volumeSlider.value = 30;
-      // 修复 tiiny.host 可能的 CSP 问题
-      if (window.location.hostname.includes('tiiny.site')) {
-        console.log('tiiny.host detected - upload functions enabled');
-      }
-    });
   </script>
 </body>
 </html>
